@@ -3,7 +3,7 @@ import { AuthContextProvider, useAuth } from '@/lib/authContext';
 import { Slot } from 'expo-router';
 import { AutocompleteDropdownContextProvider } from 'react-native-autocomplete-dropdown';
 import { DefaultTheme as MD3LightTheme, PaperProvider, MD3DarkTheme } from 'react-native-paper';
-
+import { useSettings } from '@/lib/useSettings';
 
 const themeLight = {
   ...MD3LightTheme,
