@@ -8,18 +8,27 @@ import { heightPercentageToDP as hp, widthPercentageToDP as wp } from 'react-nat
 import { useTranslation } from "react-i18next";
 import { useTheme } from "react-native-paper";
 
+/**
+ * Limits Component - Allows users to set and manage payment limits
+ * This component handles the user interface and logic for setting maximum payment limits
+ */
 export default function Limits() {
-    const { user, userDetails } = useAuth();
-    const router = useRouter();
-    const [userInfo, setUserInfo] = useState(null);
-    const [loading, setLoading] = useState(true);
-    const [isRegistered, setIsRegistered] = useState(false);
-    const [paymentmethodDocId, setPaymentMethodDocId] = useState("");
-    const [maxLimit, setMaxLimit] = useState(""); // Lokaler State für das Eingabefeld
-    const { t } = useTranslation();
-    const theme = useTheme();
+    // Hook initialization
+    const { user, userDetails } = useAuth(); // Get authenticated user information
+    const router = useRouter(); // Navigation hook
+    const { t } = useTranslation(); // Internationalization hook
+    const theme = useTheme(); // Theme hook for styling
 
+    // State management
+    const [userInfo, setUserInfo] = useState(null); // Stores user information
+    const [loading, setLoading] = useState(true);  // Loading state indicator
+    const [isRegistered, setIsRegistered] = useState(false); // User registration status
+    const [paymentmethodDocId, setPaymentMethodDocId] = useState(""); // Payment method document ID
+    const [maxLimit, setMaxLimit] = useState(""); // Maximum payment limit value
+
+    // Effect hook to fetch user information and payment method when component mounts
     useEffect(() => {
+        // Fetch user information from Firestore
         const fetchUserInfo = async () => {
             const docRef = doc(database, "User", user.uid);
             const docSnap = await getDoc(docRef);
@@ -33,15 +42,18 @@ export default function Limits() {
             setLoading(false);
         };
 
+        // Fetch or create payment method document
         const fetchPaymentMethod = async () => {
             const paymentmethodRef = collection(database, "paymentmethod");
+            // Query payment method by user email
             const q = query(paymentmethodRef, where("ownerEmail", "==", user.email));
             const querySnapshot = await getDocs(q);
             if (!querySnapshot.empty) {
+                // If payment method exists, store its ID
                 const doc = querySnapshot.docs[0];
                 setPaymentMethodDocId(doc.id);
             } else {
-                // Falls kein Dokument gefunden wurde, erstellen wir ein neues.
+                // If no payment method exists, create a new one
                 const newDocRef = await addDoc(paymentmethodRef, { ownerEmail: user.email });
                 setPaymentMethodDocId(newDocRef.id);
             }
@@ -51,7 +63,12 @@ export default function Limits() {
         fetchUserInfo();
     }, [user]);
 
+    /**
+     * Handle saving the payment limits to Firestore
+     * Validates input and updates the payment method document
+     */
     const handleSaveLimits = async () => {
+        // Input validation
         if (!maxLimit) {
             Alert.alert("Please fill all the fields!");
             return;
@@ -68,18 +85,19 @@ export default function Limits() {
             const documentPath = `paymentmethod/${paymentmethodDocId}`;
             const paymentMethodDocRef = doc(database, documentPath);
 
-            // Hole das bestehende Dokument, um die E-Mail beizubehalten
+            // Get existing document to preserve email
             const paymentMethodDocSnap = await getDoc(paymentMethodDocRef);
             let dataToSave = { maxLimit: parseFloat(maxLimit) };
 
             if (paymentMethodDocSnap.exists()) {
-                // Füge die bestehende E-Mail zur Datenstruktur hinzu
+                // Merge new data with existing document data
                 dataToSave = { ...paymentMethodDocSnap.data(), ...dataToSave };
             } else {
-                // Falls das Dokument nicht existiert, füge die E-Mail hinzu
+                // Add owner email for new documents
                 dataToSave.ownerEmail = user.email;
             }
 
+            // Save data to Firestore
             await setDoc(paymentMethodDocRef, dataToSave);
             setIsRegistered(true);
             console.log("Data saved!");
@@ -93,6 +111,7 @@ export default function Limits() {
         }
     };
 
+    // Styles using responsive sizing (wp for width percentage, hp for height percentage)
     const styles = StyleSheet.create({
         container: {
             flex: 1,
@@ -153,12 +172,17 @@ export default function Limits() {
         },
     });
 
+    // Component render
     return (
         <SafeAreaView style={styles.container}>
             <ScrollView contentContainerStyle={styles.scrollContainer}>
                 <View style={styles.section}>
+
+                    {/* Section title with translation */}
                     <Text style={styles.sectionTitle}>{t('set-limits')}</Text>
                     <View style={styles.limitContainer}>
+
+                        {/* Input field for maximum limit */}
                         <Text style={styles.label}>{t('Maxlimit')}</Text>
                         <TextInput
                             value={maxLimit}
@@ -168,6 +192,8 @@ export default function Limits() {
                             placeholderTextColor={'gray'}
                             keyboardType='numeric'
                         />
+
+                        {/* Save button */}
                         <TouchableOpacity style={styles.saveButton} onPress={handleSaveLimits}>
                             <Text style={styles.saveButtonText}>{t('save-limits')}</Text>
                         </TouchableOpacity>

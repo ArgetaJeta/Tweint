@@ -16,19 +16,29 @@ import { doc, getDoc } from 'firebase/firestore';
 import { database } from '@/lib/firebaseconfig';
 import { LogBox } from "react-native";
 
+// Suppress React Native cycle warnings in the console
 LogBox.ignoreLogs([
   "Require cycle:",
 ]);
 
+/**
+ * Home Component
+ * Main dashboard screen that displays user's balance, savings, and quick actions
+ * for financial transactions like sending/requesting money and scanning QR codes
+ */
 export default function Home() {
-  const { user, userDetails } = useAuth();
-  const { t } = useTranslation();
-  const theme = useTheme();
-  const router = useRouter();
-  const [savings, setSavings] = useState(0);
-  const [accounts, setAccounts] = useState([]);
-  const MAX_DEPOSIT_AMOUNT = 10000; 
+  // Initialize hooks for authentication, routing, translation, and theming
+  const { user, userDetails } = useAuth(); // Get current user and their details
+  const { t } = useTranslation(); // Translation function for i18n
+  const theme = useTheme(); // Access to app theme
+  const router = useRouter(); // Navigation router
 
+  // State management for financial data
+  const [savings, setSavings] = useState(0); // User's savings amount
+  const [accounts, setAccounts] = useState([]); // User's accounts list
+  const MAX_DEPOSIT_AMOUNT = 10000; // Maximum allowed deposit amount
+
+  // Navigation handler functions
   const navigateToTransfer = () => {
     router.push("/transferPage");
   };
@@ -47,7 +57,12 @@ export default function Home() {
     router.push("../accountOverview/");
   };
 
+  // Effect hook to fetch user's financial data when component mounts
   useEffect(() => {
+    /**
+     * Fetches dummy account data
+     * TODO: Replace with actual API call to fetch real account data
+     */
     const fetchAccounts = async () => {
         const dummyAccounts = [
             { id: 1, name: 'Savings Account', balance: savings },
@@ -55,10 +70,15 @@ export default function Home() {
         setAccounts(dummyAccounts);
     };
 
+    /**
+     * Fetches user's savings data from Firebase
+     * @param {string} uid - User ID to fetch savings for
+     */
     const fetchSavings = async (uid) => {
         try {
             const docRef = doc(database, 'savings', uid);
             const docSnap = await getDoc(docRef);
+
             if (docSnap.exists()) {
                 const { card } = docSnap.data();
                 setSavings(card.savings || 0);
@@ -70,6 +90,7 @@ export default function Home() {
         }
     };
 
+    // Only fetch savings if user is authenticated
     if (user) {
         fetchSavings(user.uid);
     }
@@ -77,7 +98,9 @@ export default function Home() {
     fetchAccounts();
 }, [user, savings]);
 
+// Styles definition using StyleSheet
   const styles = StyleSheet.create({
+    // Main container styles
     container: {
       flex: 1,
       justifyContent: "flex-start",
@@ -91,6 +114,8 @@ export default function Home() {
         },
       }),
     },
+
+    // Styles for the balance display section
     balanceContainer: {
       backgroundColor: theme.colors.primary,
       padding: 20,
@@ -106,6 +131,8 @@ export default function Home() {
         },
       }),
     },
+
+    // Text styles for balance display
     balanceText: {
       fontSize: 20,
       marginBottom: 10,
@@ -116,6 +143,8 @@ export default function Home() {
       fontWeight: "bold",
       color: theme.colors.onPrimary,
     },
+
+    // Styles for transaction history section
     transactionHistoryContainer: {
       backgroundColor: theme.colors.primary,
       padding: 20,
@@ -139,6 +168,8 @@ export default function Home() {
       marginBottom: 10,
       color: theme.colors.onPrimary,
     },
+
+    // Styles for action buttons container
     actionsContainer: {
       flexDirection: "row",
       justifyContent: "space-between",
@@ -152,6 +183,8 @@ export default function Home() {
         },
       }),
     },
+
+    // Individual action button styles
     actionButton: {
       backgroundColor: theme.colors.primary,
       padding: 20,
@@ -171,6 +204,8 @@ export default function Home() {
     iconRequest: {
       color: theme.colors.mainColor,
     },
+
+    // Pay button styles
     payButton: {
       backgroundColor: theme.colors.primary,
       padding: 20,
@@ -191,6 +226,8 @@ export default function Home() {
       marginLeft: 10,
       color: theme.colors.onPrimary,
     },
+
+    // Icon styles
     icon: {
       marginRight: 20,
       color: theme.colors.mainColor,
@@ -202,6 +239,7 @@ export default function Home() {
 
   return (
     <View style={styles.container}>
+      {/* Balance display section */}
       <View style={styles.balanceContainer}>
         <TouchableOpacity onPress={navigateToAccountOverview}>
           <Text style={styles.balanceText}>{t("balance-in-chf")}</Text>
@@ -215,6 +253,8 @@ export default function Home() {
           </View>
         </TouchableOpacity>
       </View>
+
+      {/* Transaction history section */}
       <View style={styles.transactionHistoryContainer}>
         <TouchableOpacity
           style={styles.transactionHistoryButton}
@@ -229,6 +269,7 @@ export default function Home() {
         </TouchableOpacity>
       </View>
 
+      {/* Action buttons for sending/requesting money */}
       <View style={styles.actionsContainer}>
         <TouchableOpacity
           style={styles.actionButton}
@@ -249,6 +290,8 @@ export default function Home() {
           <Text style={styles.actionText}>{t("request")}</Text>
         </TouchableOpacity>
       </View>
+
+      {/* QR code scanner button */}
       <TouchableOpacity
         style={styles.payButton}
         onPress={navigateToQrCodeScanner}

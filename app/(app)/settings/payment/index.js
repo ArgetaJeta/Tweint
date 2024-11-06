@@ -1,3 +1,12 @@
+/**
+ * Payment Component
+ * A React Native component that manages credit card information, including:
+ * - Card design selection
+ * - Card details entry and display
+ * - Bank account information display
+ * - Spending limits configuration
+ */
+
 import React, { useEffect, useState, useCallback } from 'react';
 import { useAuth } from '@/lib/authContext';
 import { database } from '@/lib/firebaseconfig';
@@ -9,6 +18,7 @@ import { useTranslation } from "react-i18next";
 import DateTimePicker from '@react-native-community/datetimepicker';
 import { useTheme } from "react-native-paper";
 
+// Card design options with their respective image assets
 const cardImages = [
     { id: 1, source: require('@/assets/images/mastercard1.png') },
     { id: 2, source: require('@/assets/images/mastercard2.png') },
@@ -17,23 +27,31 @@ const cardImages = [
 ];
 
 export default function Payment() {
+    // Initialize hooks and router
     const router = useRouter();
     const { user, userDetails, setUserDetails } = useAuth();
+    const { t } = useTranslation();
+    const theme = useTheme();
+
+    // State management for user and card information
     const [profileImage, setProfileImage] = useState(null);
     const [userInfo, setUserInfo] = useState(null);
     const [loading, setLoading] = useState(true);
     const [isRegistered, setIsRegistered] = useState(false);
     const [showInputFields, setShowInputFields] = useState(false);
     const [designId, setDesignId] = useState(1);
-    const { t } = useTranslation();
+
+    // State for card details form
     const [date, setDate] = useState(new Date());
     const [open, setOpen] = useState(true);
     const [holder, setHolder] = useState("");
     const [number, setNumber] = useState("");
     const [cvv, setCvv] = useState("");
 
-    const theme = useTheme();
-
+    /**
+     * Handles date picker changes
+     * Platform-specific behavior for iOS/Android
+     */
     const onDateChange = (event, selectedDate) => {
         setOpen(Platform.OS === 'ios');
         if (selectedDate) {
@@ -41,6 +59,10 @@ export default function Payment() {
         }
     };
 
+    /**
+     * Fetches user information from Firestore
+     * Includes card details if previously registered
+     */
     const fetchUserInfo = async () => {
         console.log("Fetching user info...");
         const docRef = doc(database, "User", user.uid);
@@ -48,6 +70,7 @@ export default function Payment() {
         if (docSnap.exists()) {
             const userData = docSnap.data();
             setUserInfo(userData);
+            // If card data exists, populate the form
             if (userData.card) {
                 setHolder(userData.card.holder);
                 setNumber(userData.card.number);
@@ -60,18 +83,21 @@ export default function Payment() {
         }
     };
 
+    // Platform-specific date picker behavior
     useEffect(() => {
         if (Platform.OS === 'android') {
             setOpen(false);
         }
     }, [date]);
 
+    // Initial data fetch when component mounts
     useEffect(() => {
         if (user) {
             fetchUserInfo();
         }
     }, [user]);
 
+     // Refresh data when screen comes into focus
     useFocusEffect(
         useCallback(() => {
             if (user) {
@@ -80,6 +106,7 @@ export default function Payment() {
         }, [user])
     );
 
+    // Update user details when card design changes
     useEffect(() => {
         if (userDetails && userDetails.card) {
             setUserDetails((prevDetails) => ({
@@ -92,11 +119,18 @@ export default function Payment() {
         }
     }, [designId]);
 
+    /**
+     * Navigation handler for card design selection
+     */
     const navigateToDesign = () => {
         console.log("Navigating to design selection");
         router.push('../payment/designSelection/');
     }
 
+    /**
+     * Handles card registration/update
+     * Validates required fields and saves to Firestore
+     */
     const handleRegister = async () => {
         if (!holder || !date || !cvv || !number) {
             Alert.alert('Sign Up', "Please fill all the fields!");
@@ -125,6 +159,10 @@ export default function Payment() {
         console.log("Data saved!");
     };
 
+    /**
+     * Input handlers for card number and CVV
+     * Ensures only numeric input is accepted
+     */
     const handleNumberChange = (text) => {
         const numericText = text.replace(/[^0-9]/g, '');
         setNumber(numericText);
@@ -135,8 +173,10 @@ export default function Payment() {
         setCvv(numericText);
     };
 
+    // Get the current card design image
     const selectedCardImage = cardImages.find(image => image.id === designId)?.source;
 
+    // Responsive styles
     const styles = StyleSheet.create({
         container: {
             flex: 1,
@@ -252,6 +292,8 @@ export default function Payment() {
     return (
         <SafeAreaView style={styles.container}>
             <ScrollView style={styles.scrollContainer}>
+
+                {/* Card Details Section */}
                 <View style={styles.section}>
                     <Text style={styles.sectionTitle}>{t('card-details')}</Text>
                     <TouchableOpacity
@@ -260,8 +302,11 @@ export default function Payment() {
                     >
                         <Image source={selectedCardImage} style={styles.cardImage} />
                     </TouchableOpacity>
+
+                    {/* Card Information Display/Edit Form */}
                     <View style={styles.cardDetails}>
                         {isRegistered && !showInputFields ? (
+                            // Display existing card information
                             <View style={styles.savedDetails}>
                                 <Text style={styles.detailText}>{t('card-holder')}: {holder}</Text>
                                 <Text style={styles.detailText}>{t('card-number')}: {number}</Text>
@@ -272,11 +317,13 @@ export default function Payment() {
                                 </TouchableOpacity>
                             </View>
                         ) : (
+                            // Card information input form
                             <>
                                 <TouchableOpacity onPress={() => setShowInputFields(!showInputFields)} style={styles.toggleButton}>
                                     <Text style={styles.toggleButtonText}>{showInputFields ? t('hide') : t('show')} {t('input-fields')}</Text>
                                 </TouchableOpacity >
                                 {showInputFields && (
+                                    // Input fields for card details
                                     <>
                                         <TextInput
                                             onChangeText={setHolder}
@@ -325,6 +372,7 @@ export default function Payment() {
                     </View>
                 </View>
 
+                {/* Bank Account Information Section */}
                 <View style={styles.section}>
                     <Text style={styles.sectionTitle}>{t('bank-account-overview')}</Text>
                     <View style={styles.accountDetails}>
@@ -333,6 +381,8 @@ export default function Payment() {
                         <Text style={styles.detailText}>{t('bank-name')}: TWEINT Bank</Text>
                     </View>
                 </View>
+
+                {/* Spending Limits Navigation Button */}
                 <View style={styles.section}>
                     <TouchableOpacity style={styles.limitsButton} onPress={() => { router.push('./limits') }}>
                         <Text style={styles.limitsButtonText}>{t('set-spending-limits')}</Text>
