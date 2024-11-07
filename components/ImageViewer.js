@@ -2,10 +2,14 @@ import React from 'react';
 import { Image, Text, View, StyleSheet } from "react-native";
 import { useTranslation } from "react-i18next";
 
+// The ImageViewer component displays either a placeholder or the selected image
 export default function ImageViewer({ selectedImage }) {
+    // Logging the received selectedImage prop for debugging purposes
     console.log("ImageViewer received selectedImage: ", selectedImage);
+    // Destructuring `t` from `useTranslation` to access translation functions
     const { t } = useTranslation();
 
+    // If no image is selected, show a placeholder with a message
     if (!selectedImage) {
         return (
             <View style={styles.placeholderContainer}>
@@ -14,6 +18,7 @@ export default function ImageViewer({ selectedImage }) {
         );
     } 
 
+    // If an image is selected, display the image
     return (
         
         <View style={styles.imageContainer}>
@@ -27,6 +32,7 @@ export default function ImageViewer({ selectedImage }) {
     );
 }
 
+// Define the styles for the component using StyleSheet
 const styles = StyleSheet.create({
     placeholderContainer: {
         alignItems: 'center',

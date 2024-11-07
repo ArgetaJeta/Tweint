@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import { TouchableOpacity, StyleSheet, TextInput, View, Text } from "react-native";
 import { useTranslation } from "react-i18next";
 
+// Default model for a transaction  
 const defaultModel = {
     balance: "",
     date: "",
@@ -15,8 +16,10 @@ const defaultModel = {
     },
 };
 
+// Translation hook instance
 const { t } = useTranslation();
 
+// Validation function for the transaction data
 function validateModel(transaction) {
     const errors = {
         balance: "",
@@ -32,6 +35,7 @@ function validateModel(transaction) {
     };
     let isValid = true;
 
+    // Check if the balance is empty and set error if true
     if (transaction.balance.trim().length === 0) {
         errors.balance = "balance can't be empty";
         isValid = false;
@@ -45,31 +49,37 @@ function validateModel(transaction) {
     return { errors, isValid };
 }
 
+// Main TransactionForm component
 export default function TransactionForm({ amountToEdit }) {
-    const { user } = useAuth()
-    const [isLoading, setIsLoading] = useState(false);
-    const [errors, setErrors] = useState(defaultModel);
-    const [transaction, setTransaction] = useState(defaultModel);
+    const { user } = useAuth() // Retrieve user data from context (e.g., user id)
+    const [isLoading, setIsLoading] = useState(false); // Loading state for submission
+    const [errors, setErrors] = useState(defaultModel); // State for validation errors
+    const [transaction, setTransaction] = useState(defaultModel); // State for the transaction data
 
+    // If an existing amount is passed in (amountToEdit), update the transaction state
     useEffect(() => {
         if (amountToEdit) {
             setTransaction(amountToEdit);
         }
     }, [amountToEdit]);
 
+    // Handle changes in input fields
     const handleChange = (field, value) => {
         setTransaction((prevTransaction) => ({
             ...prevTransaction,
-            [field]: value,
+            [field]: value, // Dynamically update specific field of transaction
         }));
     };
 
+    // Handle form submission
     const handleSubmit = async () => {
-        setIsLoading(true);
-        setErrors(defaultModel);
+        setIsLoading(true); // Set loading state to true when submitting
+        setErrors(defaultModel); // Reset any existing errors
 
+        // Validate the transaction data
         const result = validateModel(transaction);
 
+        // If the form is invalid, display errors and stop further execution
         if (!result.isValid) {
             setErrors(result.errors);
             setIsLoading(false);
@@ -77,20 +87,22 @@ export default function TransactionForm({ amountToEdit }) {
         }
 
         try {
+            // Create the transaction by calling createTransaction function
             await createTransaction({
                 receiver: {
-                    id: parseInt(recipient)
+                    id: parseInt(recipient) // Parse receiverId to integer
                 },
                 sender: {
-                    id: user.id
+                    id: user.id // Get sender's ID from the authenticated user
                 },
-                amount: parseFloat(amount)
+                amount: parseFloat(amount) // Convert the balance to a float
             })
         } catch (error) {
+            // Display error if transaction creation fails
             alert("Could not finish the transaction");
             console.log(error)
         }
-        setIsLoading(false);
+        setIsLoading(false); // Reset loading state after submission
     };
 
     return (
@@ -124,6 +136,7 @@ export default function TransactionForm({ amountToEdit }) {
     );
 }
 
+// Styles for the form and its elements
 const styles = StyleSheet.create({
     container: {
         flex: 1,

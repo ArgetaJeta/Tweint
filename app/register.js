@@ -13,64 +13,72 @@ import { heightPercentageToDP as hp, widthPercentageToDP as wp } from 'react-nat
 import Loading from '../components/Loading';
 import { useTranslation } from "react-i18next";
 
+// Main function for the register component
 export default function register() {
-    const router = useRouter();
-    const { register } = useAuth();
-    const [loading, setLoading] = useState(false);
-    const [selectedImage, setSelectedImage] = useState(null);
-    const { t } = useTranslation();
+    const router = useRouter(); // Enables navigation between screens
+    const { register } = useAuth(); // Custom authentication hook for registering
+    const [loading, setLoading] = useState(false); // Loading state for async operations
+    const [selectedImage, setSelectedImage] = useState(null); // State for user profile image
+    const { t } = useTranslation(); // Translation hook for multi-language support
 
+    // References for form input fields
     const usernameRef = useRef("");
     const passwordRef = useRef("");
     const emailRef = useRef("");
     const profileRef = useRef("");
 
+     // Function to handle registration process
     const handleRegister = async () => {
+        // Validate required fields
         if (!usernameRef.current || !passwordRef.current || !emailRef.current) {
             Alert.alert(t('error'), t('please-fill-all-the-fields'));
             return;
         }
 
-        setLoading(true);
-        await uploadImage();
+        setLoading(true); // Set loading to true during registration
+        await uploadImage(); // Call image upload function
         let response = await register(emailRef.current, passwordRef.current, usernameRef.current)
-        setLoading(false);
+        setLoading(false); // Stop loading once registration completes
 
+        // Display appropriate response based on registration success/failure
         if (!response.success) {
             Alert.alert(t('error'), response.msg)
         } else {
-            router.push('/login')
+            router.push('/login') // Redirect to login screen on success
         }
     }
 
+    // Function to convert URI to Blob for image uploading
     const getBlobFroUri = async (uri) => {
         const blob = await new Promise((resolve, reject) => {
             const xhr = new XMLHttpRequest();
             xhr.onload = function () {
-                resolve(xhr.response);
+                resolve(xhr.response); // Resolve with blob response on load
             };
             xhr.onerror = function (e) {
-                reject(new TypeError("Network request failed"));
+                reject(new TypeError("Network request failed")); // Reject on error
             };
-            xhr.responseType = "blob";
-            xhr.open("GET", uri, true);
+            xhr.responseType = "blob"; // Set response type to blob
+            xhr.open("GET", uri, true); // Open GET request with URI
             xhr.send(null);
         });
         return blob;
     };
 
+    // Async function to handle image upload to Firebase storage
     async function uploadImage() {
         if (!selectedImage) {
-            return;
+            return; // Return if no image selected
         }
 
-        const storageRef = ref(storage, `users/${emailRef.current}`);
-        const blob = await getBlobFroUri(selectedImage);
+        const storageRef = ref(storage, `users/${emailRef.current}`); // Create storage reference with user email
+        const blob = await getBlobFroUri(selectedImage); // Get blob from selected image URI
         await uploadBytes(storageRef, blob).then((snapshot) => {
-            console.log('Uploaded a blob or file!');
+            console.log('Uploaded a blob or file!'); // Log success message
         });
     };
 
+    // Render UI
     return (
         <CustomKeyboardView>
             <StatusBar style="dark" />
@@ -142,6 +150,7 @@ export default function register() {
     );
 }
 
+// Styles for register component
 const styles = StyleSheet.create({
     container: {
         paddingTop: hp(7),

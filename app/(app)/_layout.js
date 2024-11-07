@@ -6,15 +6,21 @@ import { useTranslation } from "react-i18next";
 import { useTheme } from "react-native-paper";
 
 export default function StackLayout() {
+  // Get the user's authentication status and loading state from the auth context
   const { user, isLoading } = useAuth();
+  // Router allows for navigation between different pages
   const router = useRouter();
+  // Translation hook for localization
   const { t } = useTranslation();
+  // Theme hook to apply styling from the theme context
   const theme = useTheme();
 
+  // Show a loading indicator if the user information is still loading
   if (isLoading) {
     return <ActivityIndicator />;
   }
 
+  // If the user is not authenticated, redirect to the login page
   if (!user) {
     return <Redirect href="/login" />;
   }
