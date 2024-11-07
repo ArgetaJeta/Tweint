@@ -23,18 +23,21 @@ import { useAuth } from "@/lib/authContext";
 import { updateUserSettings } from "@/lib/database/users";
 import { useSettings } from "@/lib/useSettings";
 
+// Suppress a specific warning in React Native
 LogBox.ignoreLogs([
   "Warning: Cannot update a component (`Settings`) while rendering a different component (`App`). To locate the bad setState() call inside `App`, follow the stack trace as described in https://reactjs.org/link/setstate-in-render",
 ]);
 
-export default function Settings() {
-  const { user, userDetails } = useAuth();
-  const router = useRouter();
-  const [visible, setVisible] = useState(false);
-  const { darkmode, setDarkmode } = useSettings();
-  const { t } = useTranslation();
-  const theme = useTheme();
+// Main component function
+export default function Settings() { 
+  const { user, userDetails } = useAuth(); // Get user and user details from authentication context
+  const router = useRouter(); // Initialize router for navigation
+  const [visible, setVisible] = useState(false); // State for controlling language selection modal visibility
+  const { darkmode, setDarkmode } = useSettings(); // Get and set dark mode settings from context
+  const { t } = useTranslation(); // Translation hook
+  const theme = useTheme(); // Theme hook for dynamic styling
 
+  // Function to change language and update user settings in the database
   const changeLng = async (lng) => {
     i18next.changeLanguage(lng);
     console.log(`Gewählte Sprache: ${lng}`);
@@ -47,6 +50,7 @@ export default function Settings() {
     setVisible(false);
   };
 
+  // Toggle dark mode and update user settings in the database
   const toggleDarkmode = async (value) => {
     setDarkmode(value);
     await updateUserSettings({
@@ -61,10 +65,11 @@ export default function Settings() {
     );
   };
 
+  // Navigation functions for payment and subscription settings
   const navigateToPaymentsSettings = () => router.push("settings/payment");
-
   const navigateToAbonements = () => router.push("settings/abos");
  
+  // Styles for the component
   const styles = StyleSheet.create({
     container: {
       flex: 1,
@@ -141,6 +146,7 @@ export default function Settings() {
 
   return (
     <SafeAreaView style={styles.container}>
+      {/* Language selection modal */}
       <Modal visible={visible}>
         <View style={styles.modalContainer}>
           <Text style={styles.title}>{t("choose-your-language")}</Text>
@@ -158,6 +164,7 @@ export default function Settings() {
         </View>
       </Modal>
 
+      {/* Main settings options */}
       <ScrollView contentContainerStyle={styles.scrollContainer}>
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>{t("language")}</Text>
@@ -169,6 +176,7 @@ export default function Settings() {
           </TouchableOpacity>
         </View>
 
+        {/* Payment methods section */}
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>{t("payment-methods")}</Text>
           <TouchableOpacity
@@ -179,6 +187,7 @@ export default function Settings() {
           </TouchableOpacity>
         </View>
 
+        {/* Subscription section */}
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>{t("abos")}</Text>
           <TouchableOpacity
@@ -189,6 +198,7 @@ export default function Settings() {
           </TouchableOpacity>
         </View>
  
+        {/* Theme (dark mode) toggle section */}
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>{t("theme")}</Text>
           <View style={styles.optionRow}>

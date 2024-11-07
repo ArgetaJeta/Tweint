@@ -8,22 +8,30 @@ import { buySubscription } from '@/lib/database/users';
 import { updateDoc, doc, getDoc, setDoc, collection, addDoc } from 'firebase/firestore';
 import { database } from '@/lib/firebaseconfig';
 
+// Constant for subscription duration (30 days in milliseconds)
 const ONE_MONTH_IN_MS = 30 * 24 * 60 * 60 * 1000; // 30 days in milliseconds
 
+/**
+ * SubscriptionPage Component
+ * Handles the display and management of subscription plans
+ */
 export default function SubscriptionPage() {
-    const { user, userDetails, updateAccount } = useAuth();
-    const [selectedPlan, setSelectedPlan] = useState(null);
-    const { t } = useTranslation();
-    const theme = useTheme();
-    const router = useRouter();
+    // Hook initialization
+    const { user, userDetails, updateAccount } = useAuth(); // Authentication context
+    const [selectedPlan, setSelectedPlan] = useState(null); // Selected subscription plan
+    const { t } = useTranslation(); // Translation hook
+    const theme = useTheme(); // Translation hook
+    const router = useRouter(); // Navigation hook
     const [expirationAlertScheduled, setExpirationAlertScheduled] = useState(false);
-
+ 
+    // Subscription plans configuration
     const plans = [
         { id: 'basic', name: t("basic"), price: 0, benefits: ['basic-text-1', 'basic-text-2', 'basic-text-3'] },
         { id: 'premium', name: t("premium"), price: 40, benefits: ['premium-text-1', 'premium-text-2', 'premium-text-3', 'premium-text-4'] },
         { id: 'elite', name: t("elite"), price: 80, benefits: ['elite-text-1', 'elite-text-2', 'elite-text-3', 'elite-text-4'] },
     ];
 
+    // Reset selected plan and check subscription status when user changes
     useEffect(() => {
         if (user) {
             setSelectedPlan(null);
@@ -31,12 +39,17 @@ export default function SubscriptionPage() {
         }
     }, [user]);
 
+    // Schedule expiration alert when flag is set
     useEffect(() => {
         if (expirationAlertScheduled) {
             scheduleExpirationAlert();
         }
     }, [expirationAlertScheduled]);
 
+    /**
+     * Check if user's subscription has expired
+     * Shows alert if expired, schedules alert if approaching expiration
+     */
     const checkSubscriptionExpiration = async () => {
         if (!user) return;
 
@@ -59,17 +72,30 @@ export default function SubscriptionPage() {
         }
     };
 
+    /**
+     * Schedule an alert for when the subscription expires
+     * @param {number} delay - Time until expiration in milliseconds
+     */
     const scheduleExpirationAlert = (delay = ONE_MONTH_IN_MS) => {
         setTimeout(() => {
             Alert.alert(t("alert"), t("subscription-expired"));
         }, delay);
     };
 
+    /**
+     * Handle plan selection
+     * @param {string} planId - ID of the selected plan
+     */
     const handleSelectPlan = (planId) => {
         setSelectedPlan(planId);
     };
 
+    /**
+     * Handle the purchase of a subscription plan
+     * Performs various checks and updates user data in Firestore
+     */
     const handlePurchase = async () => {
+        // Check if user is logged in
         if (!user) {
             Alert.alert(t("error"), t("sign-in-to-buy-abo"));
             return;
@@ -94,6 +120,7 @@ export default function SubscriptionPage() {
             }
         }
 
+        // Validate plan selection and details
         if (selectedPlan === null) {
             Alert.alert(t("error"), t("select-plan-first"));
             return;
@@ -105,12 +132,14 @@ export default function SubscriptionPage() {
             return;
         }
 
+        // Check if user has sufficient balance
         if (userDetails.balance < plan.price) {
             Alert.alert(t("error"), t("insufficient-funds"));
             return;
         }
 
         try {
+            // Process subscription purchase
             await buySubscription({ userId: user.uid, planId: selectedPlan });
 
             const newBalance = userDetails.balance - plan.price;
@@ -118,6 +147,7 @@ export default function SubscriptionPage() {
             const userDocRef = doc(database, 'users', user.uid);
             const docSnap = await getDoc(userDocRef);
 
+            // Update or create user document with new subscription details
             if (docSnap.exists()) {
                 console.log('Updating existing user document');
                 await updateDoc(userDocRef, { balance: newBalance, subscriptionPlan: selectedPlan, subscriptionPurchaseDate: new Date().toISOString() });
@@ -126,8 +156,10 @@ export default function SubscriptionPage() {
                 await setDoc(userDocRef, { balance: newBalance, subscriptionPlan: selectedPlan, subscriptionPurchaseDate: new Date().toISOString() });
             }
 
+            // Update local account state
             updateAccount({ ...userDetails, balance: newBalance, subscriptionPlan: selectedPlan });
 
+            // Record subscription in subscriptions collection
             const subscriptionsCollectionRef = collection(database, 'subscriptions');
             await addDoc(subscriptionsCollectionRef, {
                 userId: user.uid,
@@ -146,6 +178,7 @@ export default function SubscriptionPage() {
         }
     };
 
+    // Styles definition using theme colors
     const styles = StyleSheet.create({
         container: {
             flex: 1,
@@ -210,13 +243,18 @@ export default function SubscriptionPage() {
         },
     });
 
+    // Component render
     return (
         <ScrollView>
             <View style={styles.container}>
+
+                {/* Render subscription plans */}
                 {plans.map((plan) => (
                     <View key={plan.id} style={styles.planContainer}>
                         <Text style={styles.planName}>{t(plan.name)}</Text>
                         <Text style={styles.planPrice}>{`${plan.price}` + t('chf/month')}</Text>
+
+                        {/* Render plan benefits */}
                         {plan.benefits.map((benefit, index) => (
                             <Text key={index} style={styles.planBenefits}>{t(benefit)}</Text>
                         ))}
@@ -225,6 +263,8 @@ export default function SubscriptionPage() {
                         </TouchableOpacity>
                     </View>
                 ))}
+
+                {/* Show purchase button only when a plan is selected */}
                 {selectedPlan && (
                     <View style={styles.purchaseButtonContainer}>
                         <TouchableOpacity style={styles.purchaseButton} onPress={handlePurchase}>

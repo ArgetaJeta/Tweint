@@ -5,6 +5,7 @@ import { AutocompleteDropdownContextProvider } from 'react-native-autocomplete-d
 import { DefaultTheme as MD3LightTheme, PaperProvider, MD3DarkTheme } from 'react-native-paper';
 import { useSettings } from '@/lib/useSettings';
 
+// Define the light theme
 const themeLight = {
   ...MD3LightTheme,
   dark: false,
@@ -53,6 +54,7 @@ const themeLight = {
   },
 };
 
+// Define the dark theme
 const themeDark = {
   ...MD3DarkTheme,
   colors: {
@@ -100,34 +102,34 @@ const themeDark = {
   },
 }
 
-
+// App component handles theming and renders Slot for dynamic content
 function App() {
-  const {darkmode, setDarkmode} = useSettings()
-  const { user, userDetails, isLoading } = useAuth()
+  const {darkmode, setDarkmode} = useSettings() // Access dark mode setting
+  const { user, userDetails, isLoading } = useAuth() // Access authentication state and user details
 
   if (isLoading) {
-    return null
+    return null // Show nothing while loading user data
   }
 
+  // Set the dark mode based on user settings if available
   if(userDetails) {
     setDarkmode(userDetails.settings?.darkmode)
   }
 
   return (
+    // Apply either light or dark theme based on dark mode setting
     <PaperProvider theme={darkmode ? themeDark : themeLight}>
       <Slot />
     </PaperProvider>
   )
 }
 
+// RootLayout provides the context for authentication and autocomplete dropdown globally
 export default function RootLayout() {
-
-
-
   return (
-    <AutocompleteDropdownContextProvider>
-      <AuthContextProvider>
-        <App />
+    <AutocompleteDropdownContextProvider> {/* Autocomplete dropdown context */}
+      <AuthContextProvider> {/* Auth context for managing user state */}
+        <App /> {/* Main app component */}
       </AuthContextProvider>
     </AutocompleteDropdownContextProvider>
   );

@@ -12,41 +12,52 @@ import {
 import { useTranslation } from "react-i18next";
 import { useTheme } from "react-native-paper";
 
+// Ignore deprecated warning for BarCodeScanner
 LogBox.ignoreLogs(["BarCodeScanner has been deprecated"]);
 
+// QRCodeScanner component - handles scanning QR codes and navigating to transfer page
 export default function QRCodeScanner() {
-  const [hasPermission, setHasPermission] = useState(null);
-  const [scanned, setScanned] = useState(false);
-  const [qrData, setQRData] = useState(null);
+  // State management
+  const [hasPermission, setHasPermission] = useState(null); // Camera permission status
+  const [scanned, setScanned] = useState(false); // Whether a QR code has been scanned
+  const [qrData, setQRData] = useState(null); // Data from scanned QR code
+
+  // Hooks initialization
   const { t } = useTranslation();
   const theme = useTheme();
 
+  // Effect hook to request camera permissions when component mounts
   useEffect(() => {
     (async () => {
+      // Request permission to use the camera
       const { status } = await BarCodeScanner.requestPermissionsAsync();
       setHasPermission(status === "granted");
     })();
   }, []);
 
+  // Handler for successful QR code scan
   const handleBarCodeScanned = ({ type, data }) => {
-    setScanned(true);
-    setQRData(data);
+    setScanned(true); // Mark as scanned
+    setQRData(data); // Store the QR code data
   };
 
+  // Permission check renders
   if (hasPermission === null) {
-    return <Text>Warte auf Berechtigungen...</Text>;
+    return <Text>Warte auf Berechtigungen...</Text>; // Waiting for permission response
   }
   if (hasPermission === false) {
-    return <Text>Keine Berechtigung für Kamerazugriff</Text>;
+    return <Text>Keine Berechtigung für Kamerazugriff</Text>; // Permission denied
   }
 
+  // Navigation handler to transfer page with scanned QR data
   const navigateToTransferPage = () => {
     router.push({
       pathname: 'transferPage',
-      params: { recipientId: qrData },
+      params: { recipientId: qrData }, // Pass QR data as recipient ID
     });
   };
-
+ 
+  // Styles for the component
   const styles = StyleSheet.create({
     container: {
       flex: 1,
@@ -54,6 +65,8 @@ export default function QRCodeScanner() {
       justifyContent: 'center',
       backgroundColor: theme.colors.secondary,
     },
+
+    // Container for displaying scanned data
     dataContainer: {
       backgroundColor: 'rgba(0,0,0,0.5)',
       padding: 20,
@@ -61,6 +74,8 @@ export default function QRCodeScanner() {
       backgroundColor: "white",
       borderRadius: 25,
     },
+
+    // Style for the scanned data text
     dataText: {
       color: 'black',
       fontSize: 16,
@@ -69,11 +84,15 @@ export default function QRCodeScanner() {
       fontSize: 30,
       marginTop: 10,
     },
+
+    // Style for the continue button
     buttonContainer: {
       marginTop: 15,
       borderRadius: 8,
       backgroundColor: theme.colors.mainColor,
     },
+
+    // Style for the button text
     buttonText: {
       color: 'white',
       fontSize: 20,
@@ -81,11 +100,15 @@ export default function QRCodeScanner() {
       padding: 6,
       textAlign: 'center',
     },
+
+    // Style for the QR code scanning frame
     qrCode: {
       width: 280,
       height: 280,
       resizeMode: 'contain',
     },
+
+    // Container for the scanning overlay
     overlayContainer: {
       position: 'absolute',
       top: 0,
@@ -97,12 +120,16 @@ export default function QRCodeScanner() {
     },
   });
 
+  // Component render
   return (
     <View style={styles.container}>
+      {/* Camera view for QR scanning */}
       <BarCodeScanner
         onBarCodeScanned={scanned ? undefined : handleBarCodeScanned}
         style={StyleSheet.absoluteFillObject}
       />
+
+      {/* Scanning overlay - shown when not yet scanned */}
       {!scanned && (
         <View style={styles.overlayContainer}>
           <ImageBackground
@@ -112,9 +139,14 @@ export default function QRCodeScanner() {
           />
         </View>
       )}
+
+      {/* Results view - shown after successful scan */}
       {scanned && (
         <View style={styles.dataContainer}>
+          {/* Display scanned QR code data */}
           <Text style={styles.dataText}>{qrData}</Text>
+
+          {/* Navigation button to transfer page */}
           <TouchableOpacity
             style={styles.buttonContainer}
             onPress={navigateToTransferPage}

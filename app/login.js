@@ -11,31 +11,34 @@ import { StyleSheet } from 'react-native';
 import { useTranslation } from "react-i18next";
 
 export default function login() {
-    const router = useRouter();
-    const [loading, setLoading] = useState(false);
-    const { login } = useAuth();
-    const { t } = useTranslation();
+    const router = useRouter(); // Initialize the router for navigation
+    const [loading, setLoading] = useState(false); // State for loading spinner
+    const { login } = useAuth(); // Access the login function from authentication context
+    const { t } = useTranslation(); // Access translation function  
 
     //const emailRef = useRef("ivan8@test.ch");
     //const passwordRef = useRef("123456");
 
+    // Refs for email and password input fields, initially set to empty strings
     const emailRef = useRef("");
     const passwordRef = useRef("");
 
+    // Handle login functionality
     const handleLogin = async () => {
+        // Check if both email and password fields are filled
         if (!emailRef.current || !passwordRef.current) {
-            Alert.alert(t('error'), t('please-fill-all-the-fields'));
+            Alert.alert(t('error'), t('please-fill-all-the-fields')); // Show alert if fields are empty
             return;
         }
 
-        setLoading(true);
+        setLoading(true); // Show loading spinner
         try {
-            await login(emailRef.current, passwordRef.current);
-            router.replace("/home")
+            await login(emailRef.current, passwordRef.current); // Attempt login with email and password
+            router.replace("/home") // Navigate to home screen on successful login
         } catch (e) {
-            Alert.alert('Sign In', e.msg);
+            Alert.alert('Sign In', e.msg); // Show error message if login fails
         }
-        setLoading(false);
+        setLoading(false); // Hide loading spinner
     }
 
     return (
@@ -96,7 +99,7 @@ export default function login() {
     );
 }
 
-
+// Stylesheet for component
 const styles = StyleSheet.create({
     container: {
         paddingTop: hp(7),
@@ -173,5 +176,3 @@ const styles = StyleSheet.create({
         marginLeft: 5,
     },
 });
-
-

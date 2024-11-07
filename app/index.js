@@ -6,5 +6,5 @@ export default function Root() {
    // const auth = useAuth()
    // auth.logout()
 
-    return <Redirect href="/home" />
+    return <Redirect href="/home" /> // Redirect the user to the "/home" page
 }
